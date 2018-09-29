@@ -1,0 +1,23 @@
+/* 'Archer' font, Baveuse */
+
+@font-face {
+    font-family: "Baveuse";
+    src: 
+      url("./../fonts/baveuse.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: "Baveuse3D";
+    src: 
+      url("./../fonts/baveuse\ 3d.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+  }
+
+.font-special    { font-family: 'Baveuse', Georgia, 'Times New Roman', Times, serif}
+.font-special-3D { font-family: 'Baveuse3D', Georgia, 'Times New Roman', Times, serif}
+
+.font-title    { font-family: 'Notable', sans-serif; }
+.font-question { font-family: 'Cabin', sans-serif;   }
+.font-answers  { font-family: 'Krub', sans-serif;    }
