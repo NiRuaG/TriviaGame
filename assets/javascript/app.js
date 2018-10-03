@@ -45,8 +45,13 @@ $(document).ready(function() {
   let Correct_Letters = Array(QUESTIONS.length);
   let numCorrectAnswers = 0;
   let numIncorrectAnswers = 0;
-  let numTimedOutAnswer = 0;
+  let numTimedOutAnswers = 0;
   let globalTimer = null;
+  let questionResult = {
+    correct: "correct",
+    incorrect: "incorrect",
+    outoftime: "outoftime"
+  };
   //#endregion
 
   //#region just DOM things
@@ -55,7 +60,7 @@ $(document).ready(function() {
     startButton: null,
     timeRemaining: null,
     timerProgressBar: null,
-    singleResult: null,
+    activeQuesResult: null,
     correct: null,
     incorrect: null,
     outOfTime: null,
@@ -106,7 +111,7 @@ $(document).ready(function() {
     }
   };
 
-  //// Question Template
+  //// Question HTML Template
   // const DOM_CLASS_QuestionIndex = "questionIndex"
   const DOM_CLASS_QuestionText = "questionText";
   const DOM_CLASS_AnswersText = {
@@ -159,6 +164,7 @@ $(document).ready(function() {
     for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
     return o;
   };
+  //#endregion
 
   let constructQuesHTMLFrom = (questionObj, questionIndex) => {
     // Start with a new template
@@ -171,14 +177,13 @@ $(document).ready(function() {
     result.find(`.${DOM_CLASS_QuestionText}`).text(questionObj.quesText);
     // TODO: shuffle answers
 
-    // Make a shuffled/random array of indices [0..# of choices]
+    // Make a shuffled/random array of indices [0..# of choices] - eg [3,2,4,1]  if (4) choices
     let shuffledIndices = Shuffle(Array.from(Array(CHOICES_PER_QUESTION).keys()));
     let answerLetter = 'A'; // default, incase the object doesn't indicate a correct answer
     ['A', 'B', 'C', 'D'].forEach( (letter, index) => {
       let answerObj = questionObj.answers[shuffledIndices[index]];
-      let textClassTarget = DOM_CLASS_AnswersText[letter];
       result
-        .find(`.${textClassTarget}`)
+        .find(`.${DOM_CLASS_AnswersText[letter]}`)
         .text(answerObj.text);
       
         if (answerObj.correct) { answerLetter = letter; } // keep overwriting the correct answer letter, in case more than one was indicated as correct
@@ -187,7 +192,6 @@ $(document).ready(function() {
 
     return result; // Give back newly constructed jQuery object
   };
-  //#endregion
 
   function reset() {
     // Make a new array that is shuffled from the QUESTIONS array
@@ -207,17 +211,72 @@ $(document).ready(function() {
         .append($("<li>")
           .attr(`data-target`, `#${DOM_IDs.questionCarousel.id}`));
     });
-    console.log(Correct_Letters);
 
     // Make the first question (carousel-item & indicator) the active one
     $(".carousel-item").first().addClass("active");
     $(".carousel-indicators li").first().addClass("active");
   }
 
-  function ranOutOfTime() {
-    clearInterval(globalTimer);
-    DOM_CLASS_Toggles.toggle(DOM_CLASS_Toggles.outOfTime, true);
+  function finalResults(){
+    
+  }
+
+  function checkIfAtEnd() {
+    setTimeout(() => {
+      if($(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex) === Shuffled_Questions.length - 1) {
+        finalResults();
+      }
+      else {
+        $(".carousel").carousel("next"); // Bootstrap's carousel function, will update the .active .carousel-item & indicator
+        startNewQuestion();
+      }
+    }, 1000 * 1.5); // seconds to wait before going to next question or result screen
+  }
+
+  function singleResult(result) {
+    // lock the answers
     DOM_CLASS_Toggles.toggle(DOM_CLASS_Toggles.answersLocked, true);
+
+    // Target the correct answer button and change style class to 'correct' (success)
+    let correctLetter = Correct_Letters[$(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex)];
+    $(`${DOM_SELECT_AnswerButtons}[data-letter="${correctLetter}"]`)
+      .addClass("list-group-item-success")
+      .removeClass("list-group-item-info");
+
+    // Target the active carousel indicator, to be restyled below
+    let currentIndicator = $(".carousel-indicators li.active");
+
+    switch (result) {
+      case questionResult.outoftime:
+        ++numTimedOutAnswers;
+        // Show the result text
+        $(DOM_IDs.outOfTime).removeClass(DOM_CLASS_Styles.dNone);
+        // Style the indicator
+        currentIndicator.addClass("bg-warning");
+        // Toggle additional elements (ie progress timer)
+        DOM_CLASS_Toggles.toggle(DOM_CLASS_Toggles.outOfTime, true);
+        break;
+
+      case questionResult.correct:
+        ++numCorrectAnswers;
+        // Show the result text
+        $(DOM_IDs.correct).removeClass(DOM_CLASS_Styles.dNone);
+        // Style the indicator
+        currentIndicator.addClass("bg-success");
+        break;
+
+      case questionResult.incorrect:
+        ++numIncorrectAnswers;
+        // Show the result text
+        $(DOM_IDs.incorrect).removeClass(DOM_CLASS_Styles.dNone);
+        // Style the indicator
+        currentIndicator.addClass("bg-danger");
+        break;
+
+      default: ;
+    }
+
+    checkIfAtEnd();
   }
 
   function unlockChoices() {
@@ -236,26 +295,17 @@ $(document).ready(function() {
         (secondsLeft).toFixed(secondsLeft > 10 ? 0 : 1)
       );
 
-      // Calculate the percentage of time remaining and update progress bar
+      // Calculate the percentage of time remaining to update progress bar
       let percent = secondsLeft / SECONDS_PER_QUESTION * 100;
       $(timerProgressBar)
         .css("width", `${percent}%`)
         .attr("aria-valuenow", percent);
 
-      // check if out of time
+      // Check if out of time
       if (multOfSecsLeft === 0) {
-        ranOutOfTime();
-        setTimeout(() => {
-          if($(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex) === Shuffled_Questions.length - 1) {
-            console.log("We're at the end!");
-          }
-          else {
-            $(".carousel").carousel("next"); // Bootstrap's carousel function, will update the .active .carousel-item & indicator
-            startNewQuestion();
-          }
-        }, 1000 * 1); // seconds to wait before going to next question after running out of time
+        clearInterval(globalTimer); // stop the timer
+        singleResult(questionResult.outoftime);
       }
-
     }, 1000 / UPDATE_INTERVAL_DIVISOR); // seconds to update timer displays
   }
 
@@ -274,6 +324,11 @@ $(document).ready(function() {
     $(timerProgressBar).css("width", "100%");
     DOM_CLASS_Toggles.toggle(DOM_CLASS_Toggles.outOfTime, false);
 
+    // hide the previous question results
+    [DOM_IDs.correct, DOM_IDs.incorrect, DOM_IDs.outOfTime].forEach ( id => {
+      $(id).addClass(DOM_CLASS_Styles.dNone);
+    });
+
     // Timeout to let user Read Question, then show choices
     setTimeout(revealChoices, 1000 * 1); // seconds to read question then reveal answers
   }
@@ -285,30 +340,26 @@ $(document).ready(function() {
   }
 
   function clickedAnswer(event_ThatWeProbDontUse) {
+    // Stop the timer
     clearInterval(globalTimer);
-    // Set this answer as the selected choice
-    $(this).addClass(DOM_CLASS_Styles.selected);
-    // re-lock all buttons
-    DOM_CLASS_Toggles.toggle(DOM_CLASS_Toggles.answersLocked);
 
-    // store the selected answer to this question
-    let selectedLetter = $(this).data(DOM_DATA_Attr.letter);
+    // store the clicked button's letter, found by data attribute
+    let clickedLetter = $(this).data(DOM_DATA_Attr.letter);
+    // check our stored array of answers using the current question's index (by data attribute)
     let correctLetter = Correct_Letters[$(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex)];
-    // console.log(selectedLetter);
-    // console.log(correctLetter);
-    if (selectedLetter === correctLetter){
-      $(DOM_IDs.correct).removeClass(DOM_CLASS_Styles.dNone);
+
+    if (clickedLetter !== correctLetter) {
+      // Style the selected answer button to 'wrong' (danger)
+      $(this)
+        .addClass("list-group-item-danger")
+        .removeClass("list-group-item-info");
+      singleResult(questionResult.incorrect);
     }
     else {
-      $(DOM_IDs.incorrect).removeClass(DOM_CLASS_Styles.dNone);
-
-      console.log($(`${DOM_SELECT_AnswerButtons}[data-letter="${correctLetter}"]`));
-      // find(".list-group-item"));
-        // .find(`[data-${DOM_DATA_Attr.letter}="${correctLetter}"]`));
-
-        // .removeClass("list-group-item-info")
-        // .addClass("list-group-item-success");
+      singleResult(questionResult.correct);
     }
+
+    
   }
 
   //#region START of EXECUTION
@@ -316,7 +367,7 @@ $(document).ready(function() {
   for (let k of Object.keys(DOM_IDs)) {
     DOM_IDs[k] = document.getElementById(k);
   }
-
+  // Run reset
   reset();
   //#endregion
 

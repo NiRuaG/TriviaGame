@@ -36,7 +36,7 @@
     }
 
     .progress.timesUp p {
-      color: #dc3545;
+      color: #ffc107;
     }
 
     .list-group-item-action {
@@ -56,7 +56,7 @@
       color: #6c757d;
     }
 
-    div#singleResult {
+    div#activeQuesResult {
       top:0;
       bottom:0;
     }
@@ -107,10 +107,10 @@
           <span class="carousel-control-next-icon" aria-hidden="true"></span>
           <span class="sr-only">Next</span>
         </a>
-        <div id="singleResult" class="row position-absolute font-special h1 align-content-center justify-content-center">
-          <p id="correct" class="text-success d-none">CORRECT!</p>
-          <p id="incorrect" class="text-danger d-none">INCORRECT!</p>
-          <p id="outOfTime" class="text-danger d-none">ran out of time!</p>
+        <div id="activeQuesResult" class="row position-absolute font-special h1 align-content-center justify-content-center">
+          <p id="correct" class="text-success align-self-center d-none">Correct!</p>
+          <p id="incorrect" class="text-danger align-self-center d-none">Incorrect!</p>
+          <p id="outOfTime" class="text-warning align-self-center d-none">Out of Time!</p>
         </div>
       </div>            
     </section>
