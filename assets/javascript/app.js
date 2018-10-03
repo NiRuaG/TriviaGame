@@ -57,14 +57,18 @@ $(document).ready(function() {
   //#region just DOM things
   const DOM_IDs = {
     questionCarousel: null,
-    startButton: null,
     timeRemaining: null,
     timerProgressBar: null,
     activeQuesResult: null,
     correct: null,
     incorrect: null,
     outOfTime: null,
+    numCorrect: null,
+    numIncorrect: null,
+    numTimeOut: null,
   };
+
+  const DOM_CLASS_StartButton = "startButton";
 
   // Data Attributes
   // !! need to be lowercase,
@@ -89,24 +93,27 @@ $(document).ready(function() {
   
   // Events that toggle display/visibility/alert-like styles
   const DOM_CLASS_Toggles = {
-    onStart: {
-      target: ".toggleOnStart",
-      classStyle: DOM_CLASS_Styles.dNone
-    },
+    onStart: [
+      { target: ".hideOnStart", classStyle: DOM_CLASS_Styles.dNone, doAdd: false },
+      { target: ".showOnStart", classStyle: DOM_CLASS_Styles.dNone, doAdd: true },
+    ],
 
-    answersLocked: {
-      target: `${DOM_SELECT_ActiveQuestion} .list-group`,
-      classStyle: DOM_CLASS_Styles.locked
-    },
+    onFinish: [
+      { target: ".showOnFinish", classStyle: DOM_CLASS_Styles.dNone, doAdd: false },
+    ],
 
-    outOfTime: {
-      target: ".progress",
-      classStyle: DOM_CLASS_Styles.timesUp
-    },
+    answersLocked: [
+      { target: `${DOM_SELECT_ActiveQuestion} .list-group`, classStyle: DOM_CLASS_Styles.locked }, 
+    ],
+
+    outOfTime: [
+      { target: ".progress", classStyle: DOM_CLASS_Styles.timesUp, doAdd: true },
+    ],
 
     // Method to toggle on one of our objects
-    toggle(toggleEventObj, doAdd = undefined) {
-      // if doAdd is not strictly a boolean true or false, then it will toggle
+    toggle(toggleEventArray, overWriteDoAdd = undefined) {
+      // if passed in doAdd is not strictly a boolean true or false, then it will toggle
+      toggleEventArray.forEach( )
       $(toggleEventObj.target).toggleClass(toggleEventObj.classStyle, doAdd);
     }
   };
@@ -194,6 +201,14 @@ $(document).ready(function() {
   };
 
   function reset() {
+    // Reset Game Variables
+    numCorrectAnswers = 0;
+    numIncorrectAnswers = 0;
+    numTimedOutAnswers = 0;
+
+    // Hide elements that show onFinish 
+    DOM_CLASS_Toggles.toggle(DOM_CLASS_Toggles.onFinish, true);
+
     // Make a new array that is shuffled from the QUESTIONS array
     Shuffled_Questions = Shuffle(Array.from(Array(QUESTIONS.length).keys()))
       .map(shuffledIndex => {
@@ -202,6 +217,7 @@ $(document).ready(function() {
 
     // Construct the carousel items for each question
     $(".carousel-inner").empty();
+    $(".carousel-indicators").empty();
     Shuffled_Questions.forEach((questionObj, index) => {
       $(".carousel-inner")
         .append(constructQuesHTMLFrom(questionObj, index));
@@ -209,7 +225,8 @@ $(document).ready(function() {
       // add a li items to carousel indicator
       $(".carousel-indicators")
         .append($("<li>")
-          .attr(`data-target`, `#${DOM_IDs.questionCarousel.id}`));
+          .attr(`data-target`, `#${DOM_IDs.questionCarousel.id}`)
+          .attr(`data-slide-to`, index));
     });
 
     // Make the first question (carousel-item & indicator) the active one
@@ -218,19 +235,15 @@ $(document).ready(function() {
   }
 
   function finalResults(){
-    
-  }
-
-  function checkIfAtEnd() {
-    setTimeout(() => {
-      if($(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex) === Shuffled_Questions.length - 1) {
-        finalResults();
-      }
-      else {
-        $(".carousel").carousel("next"); // Bootstrap's carousel function, will update the .active .carousel-item & indicator
-        startNewQuestion();
-      }
-    }, 1000 * 1.5); // seconds to wait before going to next question or result screen
+    DOM_CLASS_Toggles.toggle(DOM_CLASS_Toggles.onFinish, false);
+    $(".carousel-indicators").removeClass(DOM_CLASS_Styles.locked);
+    // hide last answer's results
+    [DOM_IDs.correct, DOM_IDs.incorrect, DOM_IDs.outOfTime].forEach ( id => {
+      $(id).addClass(DOM_CLASS_Styles.dNone);
+    });
+    $(DOM_IDs.numCorrect  ).text(numCorrectAnswers  );
+    $(DOM_IDs.numIncorrect).text(numIncorrectAnswers);
+    $(DOM_IDs.numTimeOut  ).text(numTimedOutAnswers );
   }
 
   function singleResult(result) {
@@ -239,9 +252,10 @@ $(document).ready(function() {
 
     // Target the correct answer button and change style class to 'correct' (success)
     let correctLetter = Correct_Letters[$(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex)];
-    $(`${DOM_SELECT_AnswerButtons}[data-letter="${correctLetter}"]`)
-      .addClass("list-group-item-success")
-      .removeClass("list-group-item-info");
+    let correctButton = $(`${DOM_SELECT_AnswerButtons}[data-letter="${correctLetter}"]`);
+    correctButton.removeClass("list-group-item-info");
+    
+      
 
     // Target the active carousel indicator, to be restyled below
     let currentIndicator = $(".carousel-indicators li.active");
@@ -251,6 +265,8 @@ $(document).ready(function() {
         ++numTimedOutAnswers;
         // Show the result text
         $(DOM_IDs.outOfTime).removeClass(DOM_CLASS_Styles.dNone);
+        // Style the Correct Button
+        correctButton.addClass("list-group-item-warning")
         // Style the indicator
         currentIndicator.addClass("bg-warning");
         // Toggle additional elements (ie progress timer)
@@ -261,6 +277,8 @@ $(document).ready(function() {
         ++numCorrectAnswers;
         // Show the result text
         $(DOM_IDs.correct).removeClass(DOM_CLASS_Styles.dNone);
+        // Style the Correct Button
+        correctButton.addClass("list-group-item-success");
         // Style the indicator
         currentIndicator.addClass("bg-success");
         break;
@@ -269,6 +287,8 @@ $(document).ready(function() {
         ++numIncorrectAnswers;
         // Show the result text
         $(DOM_IDs.incorrect).removeClass(DOM_CLASS_Styles.dNone);
+        // Style the Correct Button
+        correctButton.addClass("list-group-item-success");
         // Style the indicator
         currentIndicator.addClass("bg-danger");
         break;
@@ -308,7 +328,7 @@ $(document).ready(function() {
       }
     }, 1000 / UPDATE_INTERVAL_DIVISOR); // seconds to update timer displays
   }
-
+  
   function revealChoices() {
     // Reveal choices on the _active_ carousel item
     $(`${DOM_SELECT_ActiveQuestion} .${DOM_CLASS_Styles.reveal}`).css("opacity", 1);
@@ -333,7 +353,21 @@ $(document).ready(function() {
     setTimeout(revealChoices, 1000 * 1); // seconds to read question then reveal answers
   }
 
+  function checkIfAtEnd() {
+    setTimeout(() => {
+      if($(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex) === Shuffled_Questions.length - 1) {
+        finalResults();
+      }
+      else {
+        $(".carousel").carousel("next"); // Bootstrap's carousel function, will update the .active .carousel-item & indicator
+        startNewQuestion();
+      }
+    }, 1000 * 1.5); // seconds to wait before going to next question or result screen
+  }
+
   function clickStart(event_ThatWeProbDontUse) {
+    // Run reset
+    reset();
     // Reveal Carousel of Questions
     DOM_CLASS_Toggles.toggle(DOM_CLASS_Toggles.onStart);
     startNewQuestion();
@@ -367,12 +401,10 @@ $(document).ready(function() {
   for (let k of Object.keys(DOM_IDs)) {
     DOM_IDs[k] = document.getElementById(k);
   }
-  // Run reset
-  reset();
   //#endregion
 
   //#region  On Click FUNCTIONS
-  $(startButton).on("click", clickStart);
+  $(`.${DOM_CLASS_StartButton}`).on("click", clickStart);
   // Because the ACTIVE carousel item gets dynamically cycled, use document click handler
   $(document).on("click", DOM_SELECT_AnswerButtons, clickedAnswer);
   //#endregion
