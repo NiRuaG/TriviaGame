@@ -42,10 +42,10 @@ $(document).ready(function() {
     }
   ];
   let Shuffled_Questions = Array(QUESTIONS.length);
-  let Correct_Answers = Array(QUESTIONS.length);
-  let correctAnswers = 0;
-  let incorrectAnswers = 0;
-  let timedOutAnswer = 0;
+  let Correct_Letters = Array(QUESTIONS.length);
+  let numCorrectAnswers = 0;
+  let numIncorrectAnswers = 0;
+  let numTimedOutAnswer = 0;
   let globalTimer = null;
   //#endregion
 
@@ -65,7 +65,7 @@ $(document).ready(function() {
   // !! need to be lowercase,
   const DOM_DATA_Attr = {
     qIndex: "q-index".toLowerCase(),
-    answer: "answer".toLowerCase(),
+    letter: "letter".toLowerCase(),
     correct: "correct".toLowerCase(),
   };
 
@@ -124,25 +124,25 @@ $(document).ready(function() {
             <div class="col-12 col-sm-9 col-lg-6 p-0 list-group 
             ${DOM_CLASS_Styles.reveal} ${DOM_CLASS_Styles.locked}">
               <button type="button" class="row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0" data-${
-                DOM_DATA_Attr.answer
+                DOM_DATA_Attr.letter
               }="A">
                 <span class="col-2 font-special">a.</span>
                 <span class="col ${DOM_CLASS_AnswersText.A}"></span>
               </button>
               <button type="button" class="row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0" data-${
-                DOM_DATA_Attr.answer
+                DOM_DATA_Attr.letter
               }="B">
                 <span class="col-2 font-special">b.</span>
                 <span class="col ${DOM_CLASS_AnswersText.B}"></span>
               </button>
               <button type="button" class="row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0" data-${
-                DOM_DATA_Attr.answer
+                DOM_DATA_Attr.letter
               }="C">
                 <span class="col-2 font-special">c.</span>
                 <span class="col ${DOM_CLASS_AnswersText.C}"></span>
               </button>
               <button type="button" class="row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0" data-${
-                DOM_DATA_Attr.answer
+                DOM_DATA_Attr.letter
               }="D">
                 <span class="col-2 font-special">d.</span>
                 <span class="col ${DOM_CLASS_AnswersText.D}"></span>
@@ -183,7 +183,7 @@ $(document).ready(function() {
       
         if (answerObj.correct) { answerLetter = letter; } // keep overwriting the correct answer letter, in case more than one was indicated as correct
     });
-    Correct_Answers[questionIndex] = answerLetter;
+    Correct_Letters[questionIndex] = answerLetter;
 
     return result; // Give back newly constructed jQuery object
   };
@@ -207,7 +207,7 @@ $(document).ready(function() {
         .append($("<li>")
           .attr(`data-target`, `#${DOM_IDs.questionCarousel.id}`));
     });
-    console.log(Correct_Answers);
+    console.log(Correct_Letters);
 
     // Make the first question (carousel-item & indicator) the active one
     $(".carousel-item").first().addClass("active");
@@ -242,11 +242,9 @@ $(document).ready(function() {
         .css("width", `${percent}%`)
         .attr("aria-valuenow", percent);
 
-      // check if out of Time
+      // check if out of time
       if (multOfSecsLeft === 0) {
         ranOutOfTime();
-        // Display correct answer
-
         setTimeout(() => {
           if($(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex) === Shuffled_Questions.length - 1) {
             console.log("We're at the end!");
@@ -257,6 +255,7 @@ $(document).ready(function() {
           }
         }, 1000 * 1); // seconds to wait before going to next question after running out of time
       }
+
     }, 1000 / UPDATE_INTERVAL_DIVISOR); // seconds to update timer displays
   }
 
@@ -293,15 +292,31 @@ $(document).ready(function() {
     DOM_CLASS_Toggles.toggle(DOM_CLASS_Toggles.answersLocked);
 
     // store the selected answer to this question
-    let selectedAnswer = $(this).data(DOM_DATA_Attr.answer);
-    console.log(selectedAnswer);
+    let selectedLetter = $(this).data(DOM_DATA_Attr.letter);
+    let correctLetter = Correct_Letters[$(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex)];
+    // console.log(selectedLetter);
+    // console.log(correctLetter);
+    if (selectedLetter === correctLetter){
+      $(DOM_IDs.correct).removeClass(DOM_CLASS_Styles.dNone);
+    }
+    else {
+      $(DOM_IDs.incorrect).removeClass(DOM_CLASS_Styles.dNone);
+
+      console.log($(`${DOM_SELECT_AnswerButtons}[data-letter="${correctLetter}"]`));
+      // find(".list-group-item"));
+        // .find(`[data-${DOM_DATA_Attr.letter}="${correctLetter}"]`));
+
+        // .removeClass("list-group-item-info")
+        // .addClass("list-group-item-success");
+    }
   }
 
-  //#region  START of EXECUTION
+  //#region START of EXECUTION
   // Link up the DOM elements by their ids
   for (let k of Object.keys(DOM_IDs)) {
     DOM_IDs[k] = document.getElementById(k);
   }
+
   reset();
   //#endregion
 
@@ -309,7 +324,6 @@ $(document).ready(function() {
   $(startButton).on("click", clickStart);
   // Because the ACTIVE carousel item gets dynamically cycled, use document click handler
   $(document).on("click", DOM_SELECT_AnswerButtons, clickedAnswer);
-
   //#endregion
 });
 
