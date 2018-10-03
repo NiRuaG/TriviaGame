@@ -42,17 +42,28 @@
     .list-group-item-action {
       cursor: pointer;
     }
+
     .list-group-item-info.list-group-item-action:hover {
-      background: #dc3545;
+      background: #007bff;
       color: #f8f9fa;
     }
-    .locked .list-group-item-info.list-group-item-action {
+    .list-group-item-info.list-group-item-action.selected {
+      background: #007bff;
+      color: #f8f9fa;
+    }
+
+    .locked .list-group-item-info.list-group-item-action:not(.selected) {
       color: #6c757d;
+    }
+
+    div#singleResult {
+      top:0;
+      bottom:0;
     }
   </style>
 </head>
 
-<body class="bg-danger">
+<body class="bg-primary">
   <header class="jumbotron jumbotron-fluid pl-5 py-5">
     <h1 class="display-3 font-special-3D">Archer Trivia.. maybe</h1>
     <p class="lead font-question">How well can one know the <em>world's most dangerous spy</em>?</p>
@@ -65,8 +76,9 @@
         <li>You have NUM# seconds to answer NUM# Trivia Questions on TOPIC.</li>
         <li>Click on the multiple-choice answers. <br>You can also use the keyboard letters (MAYBE).</li>
       </ul>
-      <button id="startButton" class="col-auto btn btn-danger mt-5"><kbd>Enter</kbd> the <em>Danger Zone</em></button>
+      <button id="startButton" class="col-auto btn btn-primary mt-5"><kbd>Enter</kbd> the <em>Danger Zone</em></button>
     </section>
+
 
     <!-- Questions -->
     <section class="d-none toggleOnStart">
@@ -80,71 +92,27 @@
       </div>
 
       <!-- Carousel -->
-      <div id="carouselExample" class="row justify-content-center carousel slide mt-4" data-ride="false" data-interval="false"
-        data-pause="false" data-wrap="true">
+      <div id="questionCarousel" class="row justify-content-center carousel slide mt-4" data-ride="false" data-interval="false"
+        data-pause="false" data-wrap="false">
         <ol class="carousel-indicators locked">
         </ol>
         <div class="col-12 col-md-8 carousel-inner bg-dark text-light px-1 pb-5">
-          <!-- <div class="row m-0 carousel-item active">
-            <h1 class="col-12 font-question pt-2"><span class="questionText"></span></h1>
-            <div class="col-12 reveal locked toggleLock text-dark">
-              <div class="row justify-content-center">
-                <div class="col-12 col-sm-9 col-lg-6 p-0 list-group">
-                  <button type="button" class="row list-group-item list-group-item-action list-group-item-info py-4 m-0">
-                    <span class="col-2 font-special">a.</span>
-                    <span class="col">Multiple-Choice Answer 1</span>
-                  </button>
-                  <button type="button" class="row list-group-item list-group-item-action list-group-item-info py-4 m-0">
-                    <span class="col-2 font-special">b.</span>
-                    <span class="col">Multiple-Choice Answer 2</span>
-                  </button>
-                  <button type="button" class="row list-group-item list-group-item-action list-group-item-info py-4 m-0">
-                    <span class="col-2 font-special">c.</span>
-                    <span class="col">Multiple-Choice Answer 3</span>
-                  </button>
-                  <button type="button" class="row list-group-item list-group-item-action list-group-item-info py-4 m-0">
-                    <span class="col-2 font-special">d.</span>
-                    <span class="col">Multiple-Choice Answer 4</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row m-0 carousel-item">
-            <h1 class="col-12 font-question pt-2">Is this question #2?</h1>
-            <div class="col-12">
-              <div class="row justify-content-center">
-                <div class="col-6 p-0 list-group">
-                  <button class="row list-group-item list-group-item-action list-group-item-info py-4 m-0">
-                    <span class="col-2 font-special">a.</span>
-                    <span class="col">Multiple-Choice Answer 1</span>
-                  </button>
-                  <button class="row list-group-item list-group-item-action list-group-item-info py-4 m-0">
-                    <span class="col-2 font-special">b.</span>
-                    <span class="col">Multiple-Choice Answer 2</span>
-                    </a>
-                    <button class="row list-group-item list-group-item-action list-group-item-info py-4 m-0">
-                      <span class="col-2 font-special">c.</span>
-                      <span class="col">Multiple-Choice Answer 3</span>
-                    </button>
-                    <button class="row list-group-item list-group-item-action list-group-item-info py-4 m-0">
-                      <span class="col-2 font-special">d.</span>
-                      <span class="col">Multiple-Choice Answer 4</span>
-                    </button>
-                </div>
-              </div>
-            </div>
-          </div> -->
+          <!-- GETS DYNAMICALLY FILLED -->
         </div>
         <!-- <a class="carousel-control-prev" href="#carouselExample" role="button" data-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="sr-only">Previous</span>
-            </a> -->
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Previous</span>
+                    </a> -->
         <a class="carousel-control-next" href="#carouselExample" role="button" data-slide="next">
           <span class="carousel-control-next-icon" aria-hidden="true"></span>
           <span class="sr-only">Next</span>
         </a>
-      </div>
+        <div id="singleResult" class="row position-absolute font-special h1 align-content-center justify-content-center">
+          <p id="correct" class="text-success d-none">CORRECT</p>
+          <p id="incorrect" class="text-danger d-none">INCORRECT</p>
+          <p id="outOfTime" class="text-danger d-none">ran out of time</p>
+        </div>
+      </div>            
     </section>
   </main>
 
