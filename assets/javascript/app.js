@@ -9,7 +9,7 @@ $(document).ready(function() {
   //#region Variables & Constants for Trivia Game
   const SECONDS_PER_QUESTION = 5;
   const UPDATE_INTERVAL_DIVISOR = 10; // update every tenth of a second
-  const CHOICES_PER_QUESTION = 4; // DO NOT CHANGE - this is currently NOT flexible, questions are assumed as multiple-choice of 4 choices - the corresponding answer letters [A,B,C,D] are hard-coded
+  const CHOICES_PER_QUESTION = 4; // DO NOT CHANGE - this is currently NOT flexible, questions are assumed as multiple-choice of 4 - the corresponding answer letters [A,B,C,D] are hard-coded
 
   const QUESTIONS = [
     { 
