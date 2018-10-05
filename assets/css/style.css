@@ -67,3 +67,7 @@
 .carousel-item h2 {
   height: 6rem;
 }
+
+main.container img {
+  max-height: 50vh;
+}
