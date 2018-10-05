@@ -1,3 +1,4 @@
+// Cheating helper/tester
 let isCheating = false;
 function toggleCheat() {
   isCheating = !isCheating;
@@ -6,47 +7,110 @@ function toggleCheat() {
 
 $(document).ready(function() {
   //#region Variables & Constants for Trivia Game
-  const SECONDS_PER_QUESTION = 2;
+  const SECONDS_PER_QUESTION = 5;
   const UPDATE_INTERVAL_DIVISOR = 10; // update every tenth of a second
   const CHOICES_PER_QUESTION = 4; // DO NOT CHANGE - this is currently NOT flexible, questions are assumed as multiple-choice of 4 choices - the corresponding answer letters [A,B,C,D] are hard-coded
 
   const QUESTIONS = [
-    {
-      quesText: "Is this question #1?",
+    { 
+      quesText: "In what city was Archer born?",
       answers: [
-        { text: "Multiple-Choice Answer #11", correct: true },
-        { text: "Multiple-Choice Answer #12" },
-        { text: "Multiple-Choice Answer #13" },
-        { text: "Multiple-Choice Answer #14" }
+        { text: "Berlin" },
+        { text: "San Marcos" },
+        { text: "Tangiers", correct: true },
+        { text: "New York", }
       ]
     },
     {
-      quesText: "Is this question #2?",
+      quesText: "Who is NOT possibly Archer's father?",
       answers: [
-        { text: "Multiple-Choice Answer #21" },
-        { text: "Multiple-Choice Answer #22", correct: true },
-        { text: "Multiple-Choice Answer #23" },
-        { text: "Multiple-Choice Answer #24" }
+        { text: "Nikolai Jakov" },
+        { text: "Len Trexler" },
+        { text: "Buddy Rich" },
+        { text: "Woodhouse", correct: true }
       ]
     },
     {
-      quesText: "Is this question #3?",
+      quesText: "What is Archer's codename?",
       answers: [
-        { text: "Multiple-Choice Answer #31" },
-        { text: "Multiple-Choice Answer #32" },
-        { text: "Multiple-Choice Answer #33", correct: true },
-        { text: "Multiple-Choice Answer #34" }
+        { text: "Duchess", correct: true },
+        { text: "006" },
+        { text: "Rainbow" },
+        { text: "Bond" }
       ]
     },
     {
-      quesText: "Is this question #4?",
+      quesText: "Who is Archer's worst enemy?",
       answers: [
-        { text: "Multiple-Choice Answer #41" },
-        { text: "Multiple-Choice Answer #42" },
-        { text: "Multiple-Choice Answer #43" },
-        { text: "Multiple-Choice Answer #44", correct: true }
+        { text: "Burt Reynolds" },
+        { text: "Barry Dylan", correct: true },
+        { text: "Conway Stern" },
+        { text: "Rip Riley" }
       ]
-    }
+    },
+    {
+      quesText: "What type of firearm does Archer prefer?",
+      answers: [
+        { text: "Walther PPK"          , correct: true },
+        { text: "Chekhov's gun"        , },
+        { text: "TEC_9's"              , },
+        { text: "Webley Mk VI Revolver", }
+      ]
+    },
+    {
+      quesText: "Why did Archer miss varsity lacrosse his freshman year?",
+      answers: [
+        { text: "Pneumonia", correct: true },
+        { text: "Amnesia"  , },
+        { text: "Coma"     , },
+        { text: "Lead Poisoning", }
+      ]
+    },
+    {
+      quesText: "What is Archer's ringtone?",
+      answers: [
+        { text: "Mulatto Butts", correct: true },
+        { text: "Trombone slide"  , },
+        { text: "Danger Zone"     , },
+        { text: "East Bound and Down", }
+      ]
+    },
+    {
+      quesText: "Archer is in remission from what cancer?",
+      answers: [
+        { text: "Breast", correct: true },
+        { text: "Prostate"  , },
+        { text: "Liver"     , },
+        { text: "Lung", }
+      ]
+    },
+    {
+      quesText: "Which is NOT one of Archer's biggest fears?",
+      answers: [
+        { text: "Crocodiles", },
+        { text: "Aneurisms" , },
+        { text: "The Bermuda Triangle", },
+        { text: "Death", correct: true }
+      ]
+    },
+    {
+      quesText: "What is Archer's most typical alias?",
+      answers: [
+        { text: "Randy", correct: true},
+        { text: "Crenshaw" , },
+        { text: "Slater", },
+        { text: "Chet Manley", }
+      ]
+    },
+    {
+      quesText: "What CB Handle was given to Archer?",
+      answers: [
+        { text: "Lickbag", correct: true},
+        { text: "Snowball" , },
+        { text: "Bilbo", },
+        { text: "Jerkins", }
+      ]
+    },
   ];
 
   const questionResult = { // intended as basic enum
@@ -78,8 +142,8 @@ $(document).ready(function() {
 
   //#region just DOM things
   const DOM_IDs = {
-    secondsPerQ     : null, 
-    questionCarousel: null, 
+    secondsPerQ     : null,
+    questionCarousel: null,
     timeRemaining   : null,
     timerProgressBar: null,
     correct_text    : null,
@@ -96,16 +160,11 @@ $(document).ready(function() {
   // One-off IDs that relate to game constants 
   $(DOM_IDs.secondsPerQ).text(SECONDS_PER_QUESTION);
   
-
-  // Classes
-  const DOM_CLASS_StartButton = "startButton";
-  const DOM_CLASS_SingleResult = "singleResult";
-
   // Data Attributes
   // !! need to be lowercase, will be broken by 'under-the-hood' conversions if not 
   const DOM_DATA_Attr = {
-    qIndex: "q-index".toLowerCase(),
-    letter: "letter".toLowerCase(),
+    qIndex : "q-index".toLowerCase(),
+    letter : "letter" .toLowerCase(),
     correct: "correct".toLowerCase(),
   };
 
@@ -115,18 +174,26 @@ $(document).ready(function() {
     locked : "locked" , // Removes pointer events
     timesUp: "timesUp", // Warning/Danger style text
   };
-
-  // Static Targets for events that toggle style classes, held as jQuery
+  // Static Targets for events that toggle hide/show, a style above
   const DOM_JQ_Events = {
-    hideOnStart : $(".hideOnStart" ),
-    showOnStart : $(".showOnStart" ),
-    showOnFinish: $(".showOnFinish"),
-    onTimeOut   : $(".onTimeOut"   ),
+    // store the query results
+    jq_hideOnStart : $(".hideOnStart" ),
+    jq_showOnStart : $(".showOnStart" ),
+    jq_showOnFinish: $(".showOnFinish"),
+    jq_onTimeOut   : $(".onTimeOut"   ),
+
+    hideOnStart () { this.jq_hideOnStart .hide(); },
+    showOnStart () { this.jq_showOnStart .show(); },
+    showOnFinish() { this.jq_showOnFinish.show(); },
+
+    onTimeOut(isOut) { this.jq_onTimeOut.toggleClass(DOM_CLASS_Styles.timesUp, isOut); },
   };
 
-  // Static Target Selects, held as jQuery
-  const DOM_JQ_Questions  = $(".carousel-inner");      // parent element that holds all the questions
-  const DOM_JQ_Indicators = $(".carousel-indicators"); // parent element of the carousel indicators  
+  // Static Target Selects, held as jQuery (possibly array of targets)
+  const DOM_JQ_Questions     = $(".carousel-inner");      // parent element that holds all the questions
+  const DOM_JQ_Indicators    = $(".carousel-indicators"); // parent element of the carousel indicators  
+  const DOM_JQ_SingleResults = $(".singleResult");
+  const DOM_JQ_StartButtons  = $(".startButton");
 
   // Dynamic Target Selectors
   const DOM_SELECT_ActiveQuestion = ".carousel-item.active";
@@ -134,7 +201,7 @@ $(document).ready(function() {
   
   //// Question HTML Template
   const DOM_CLASS_QuestionText = "questionText";
-  const DOM_CLASS_AnswersText = { // keys are important
+  const DOM_CLASS_AnswersText = { // keys A,B,C,D are critical
     A: "Atext",
     B: "Btext",
     C: "Ctext",
@@ -143,7 +210,7 @@ $(document).ready(function() {
 
   const HTML_QUESTION_TEMPLATE = `
       <div class="row m-0 carousel-item">
-        <h1 class="col-12 font-question pt-2 text-center"><span class="${DOM_CLASS_QuestionText}"></span></h1>
+        <h2 class="col-12 font-question pt-2 text-center"><span class="${DOM_CLASS_QuestionText}"></span></h2>
         <div class="col-12 text-dark">
           <div class="row justify-content-center">
             <div class="col-12 col-sm-9 col-lg-6 p-0 list-group 
@@ -223,7 +290,7 @@ $(document).ready(function() {
     // Reset Game Variables
     TriviaGame.reset();
 
-    DOM_JQ_Events.hideOnStart.hide();
+    DOM_JQ_Events.hideOnStart();
 
     // Make a new array that is shuffled from the QUESTIONS array
     Shuffled_Questions = Shuffle(Array.from(Array(QUESTIONS.length).keys()))
@@ -248,11 +315,11 @@ $(document).ready(function() {
 
     // Make the first question (carousel-item & indicator) the active one
     $(".carousel-item").first().addClass("active");
-    $(".carousel-indicators li").first().addClass("active");
+    DOM_JQ_Indicators.find('li').first().addClass("active");
   }
 
-  function finalResults(){
-    DOM_JQ_Events.showOnFinish.show();
+  function finalResults() {
+    DOM_JQ_Events.showOnFinish();
     DOM_JQ_Indicators.removeClass(DOM_CLASS_Styles.locked); // make indicators clickable
     $(DOM_IDs.numCorrect  ).text(TriviaGame.numCorrectAnswers  );
     $(DOM_IDs.numIncorrect).text(TriviaGame.numIncorrectAnswers);
@@ -268,7 +335,7 @@ $(document).ready(function() {
     correctButton.removeClass("list-group-item-info");
 
     // Target the active carousel indicator to restyle it below
-    let currentIndicator = $(".carousel-indicators li.active");
+    let currentIndicator = DOM_JQ_Indicators.find("li.active");
 
     switch (result) {
       case questionResult.outOfTime:
@@ -298,9 +365,9 @@ $(document).ready(function() {
     // Timeout for user to see result
     setTimeout(() => {
       // Hide the single question results
-      $(`.${DOM_CLASS_SingleResult}`).hide();
+      DOM_JQ_SingleResults.hide();
       // Clear timesUp style class
-      DOM_JQ_Events.onTimeOut.removeClass(DOM_CLASS_Styles.timesUp);
+      DOM_JQ_Events.onTimeOut(false);
       
       checkIfAtEnd();
     }, 1000 * 1.5); // seconds to wait before going to next question
@@ -318,7 +385,7 @@ $(document).ready(function() {
       if (multOfSecsLeft === 0) {
         clearInterval(globalTimer); // stop the timer
         // Style elements on this event (ie progress timer)
-        DOM_JQ_Events.onTimeOut.addClass(DOM_CLASS_Styles.timesUp)
+        DOM_JQ_Events.onTimeOut(true);
         singleResult(questionResult.outOfTime); // show result
       }
       else {
@@ -350,7 +417,7 @@ $(document).ready(function() {
 
   function startNewQuestion() {
     // Reset Timer elements to 'Full'
-    $(DOM_IDs.timeRemaining).text(SECONDS_PER_QUESTION);
+    $(DOM_IDs.timeRemaining   ).text(SECONDS_PER_QUESTION);
     $(DOM_IDs.timerProgressBar).css("width", "100%");
 
     if (isCheating) {
@@ -387,12 +454,12 @@ $(document).ready(function() {
     // Stop the timer
     clearInterval(globalTimer);
 
-    // Store the clicked button's letter, found by data attribute
-    let clickedLetter = $(this).data(DOM_DATA_Attr.letter);
-    // Check our stored array of answer letters, using the current question's index (data attribute)
-    let correctLetter = Correct_Letters[$(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex)];
-
-    if (clickedLetter !== correctLetter) {
+    // compare the current buttons letter (by data attribute) against the current question's correct answer letter
+    if ($(this).data(DOM_DATA_Attr.letter) === getActiveCorrectLetter()) { // user clicked correctly
+      // Show the correct result
+      singleResult(questionResult.correct);
+    }
+    else { // user clicked incorrectly
       // Style the selected answer button to 'wrong' (danger)
       $(this)
         .addClass("list-group-item-danger")
@@ -400,17 +467,13 @@ $(document).ready(function() {
       // Show the incorrect result
       singleResult(questionResult.incorrect);
     }
-    else {
-      // Show the correct result
-      singleResult(questionResult.correct);
-    }
   }
 
   function clickStart(event_ThatWeProbDontUse) {
     // Run Reset
     reset();
     // Reveal Carousel of Questions
-    DOM_JQ_Events.showOnStart.show();
+    DOM_JQ_Events.showOnStart();
     // Start the first question
     startNewQuestion();
   }
@@ -423,7 +486,7 @@ Answer will appear on next trivia question.`);
   //#endregion
 
   //#region On Event FUNCTIONS
-  $(`.${DOM_CLASS_StartButton}`).on("click", clickStart);
+  DOM_JQ_StartButtons.on("click", clickStart);
   // Because the ACTIVE carousel item gets dynamically cycled, use document click handler instead
   $(document).on("click", DOM_SELECT_AnswerButtons, clickedAnswer);
   //#endregion

@@ -60,4 +60,6 @@
 
 .carousel-indicators li.active {
   height: 6px;
+  border-bottom-left-radius: .25rem;
+  border-bottom-right-radius: .25rem;
 }
