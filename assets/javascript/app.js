@@ -1,3 +1,9 @@
+let isCheating = false;
+function toggleCheat() {
+  isCheating = !isCheating;
+  console.log(`Cheating ${isCheating}`);
+}
+
 $(document).ready(function() {
   //#region Variables & Constants for Trivia Game
   const SECONDS_PER_QUESTION = 2;
@@ -42,67 +48,89 @@ $(document).ready(function() {
       ]
     }
   ];
+
   const questionResult = { // intended as basic enum
-    correct: "correct",
+      correct: "correct",
     incorrect: "incorrect",
-    outoftime: "outoftime"
+    outOfTime: "outOfTime"
   };
 
+  // variables initialized
   let Shuffled_Questions = Array(QUESTIONS.length);
   let Correct_Letters = Array(QUESTIONS.length);
-  let numCorrectAnswers = 0;
-  let numIncorrectAnswers = 0;
-  let numTimedOutAnswers = 0;
   let globalTimer = null;
+
+  // variables to be reset
+  let TriviaGame = {
+    numCorrectAnswers   : 0,
+    numIncorrectAnswers : 0,
+    numTimedOutAnswers  : 0,
+    gameComplete        : false,
+    reset() {
+      this.numCorrectAnswers = 0;
+      this.numIncorrectAnswers = 0;
+      this.numTimedOutAnswers =0;
+      this.gameComplete = false;
+    }
+  }
   //#endregion
   
 
   //#region just DOM things
   const DOM_IDs = {
-    secondsPerQ: null,
-
-    questionCarousel: null,
+    secondsPerQ     : null, 
+    questionCarousel: null, 
     timeRemaining   : null,
     timerProgressBar: null,
-    correct         : null,
-    incorrect       : null,
-    outOfTime       : null,
-    numCorrect      : null,
+    correct_text    : null,
+    incorrect_text  : null,
+    outOfTime_text  : null,
+    numCorrect      : null, 
     numIncorrect    : null,
     numTimeOut      : null,
   };
+  // Link up the DOM elements by their ids
+  for (let k of Object.keys(DOM_IDs)) {
+    DOM_IDs[k] = document.getElementById(k);
+  }
+  // One-off IDs that relate to game constants 
+  $(DOM_IDs.secondsPerQ).text(SECONDS_PER_QUESTION);
+  
 
-  // Class Buttons
+  // Classes
   const DOM_CLASS_StartButton = "startButton";
-
-  // Classes that apply a CSS style
-  const DOM_CLASS_Styles = {
-    reveal  : "reveal"  , // Transitions from 0 Opacity
-    locked  : "locked"  , // Removes pointer events
-    timesUp : "timesUp" , // Warning/Danger style text
-    // selected: "selected", // the selected answer
-  };
+  const DOM_CLASS_SingleResult = "singleResult";
 
   // Data Attributes
-  // !! need to be lowercase, will be broken by under-the-hood conversions if not 
+  // !! need to be lowercase, will be broken by 'under-the-hood' conversions if not 
   const DOM_DATA_Attr = {
     qIndex: "q-index".toLowerCase(),
     letter: "letter".toLowerCase(),
     correct: "correct".toLowerCase(),
   };
 
-  // Target Selectors
+  // Classes that apply a CSS style
+  const DOM_CLASS_Styles = {
+    reveal : "reveal" , // Transitions from 0 Opacity
+    locked : "locked" , // Removes pointer events
+    timesUp: "timesUp", // Warning/Danger style text
+  };
+
+  // Static Targets for events that toggle style classes, held as jQuery
+  const DOM_JQ_Events = {
+    hideOnStart : $(".hideOnStart" ),
+    showOnStart : $(".showOnStart" ),
+    showOnFinish: $(".showOnFinish"),
+    onTimeOut   : $(".onTimeOut"   ),
+  };
+
+  // Static Target Selects, held as jQuery
+  const DOM_JQ_Questions  = $(".carousel-inner");      // parent element that holds all the questions
+  const DOM_JQ_Indicators = $(".carousel-indicators"); // parent element of the carousel indicators  
+
+  // Dynamic Target Selectors
   const DOM_SELECT_ActiveQuestion = ".carousel-item.active";
   const DOM_SELECT_AnswerButtons = `${DOM_SELECT_ActiveQuestion} button.list-group-item`;
-
-  // Events that toggle display/visibility/alert-like style 
-  const DOM_SELECT_Events = {
-    hideOnStart : ".hideOnStart",
-    showOnStart : ".showOnStart",
-    showOnFinish: ".showOnFinish",
-    outOfTime   : ".progress",
-    answerLocks : `${DOM_SELECT_ActiveQuestion} .list-group`,
-  };
   
   //// Question HTML Template
   const DOM_CLASS_QuestionText = "questionText";
@@ -119,28 +147,28 @@ $(document).ready(function() {
         <div class="col-12 text-dark">
           <div class="row justify-content-center">
             <div class="col-12 col-sm-9 col-lg-6 p-0 list-group 
-            ${DOM_CLASS_Styles.reveal} ${DOM_CLASS_Styles.locked}">
-              <button type="button" class="row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0" data-${
-                DOM_DATA_Attr.letter
-              }="A">
+            ${DOM_CLASS_Styles.reveal}">
+              <button type="button" 
+               class="${DOM_CLASS_Styles.locked} row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0" 
+               data-${DOM_DATA_Attr.letter}="A">
                 <span class="col-2 font-special">a.</span>
                 <span class="col ${DOM_CLASS_AnswersText.A}"></span>
               </button>
-              <button type="button" class="row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0" data-${
-                DOM_DATA_Attr.letter
-              }="B">
+              <button type="button" 
+               class="${DOM_CLASS_Styles.locked} row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0" 
+               data-${DOM_DATA_Attr.letter}="B">
                 <span class="col-2 font-special">b.</span>
                 <span class="col ${DOM_CLASS_AnswersText.B}"></span>
               </button>
-              <button type="button" class="row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0" data-${
-                DOM_DATA_Attr.letter
-              }="C">
+              <button type="button" 
+               class="${DOM_CLASS_Styles.locked} row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0"
+               data-${DOM_DATA_Attr.letter}="C">
                 <span class="col-2 font-special">c.</span>
                 <span class="col ${DOM_CLASS_AnswersText.C}"></span>
               </button>
-              <button type="button" class="row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0" data-${
-                DOM_DATA_Attr.letter
-              }="D">
+              <button type="button" 
+               class="${DOM_CLASS_Styles.locked} row d-flex list-group-item list-group-item-action list-group-item-info py-4 m-0" 
+               data-${DOM_DATA_Attr.letter}="D">
                 <span class="col-2 font-special">d.</span>
                 <span class="col ${DOM_CLASS_AnswersText.D}"></span>
               </button>
@@ -150,13 +178,19 @@ $(document).ready(function() {
       </div>`;
   //#endregion
 
+
   //#region Utility Functions
   //// https://css-tricks.com/snippets/javascript/shuffle-array/
   function Shuffle(o) {
     for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
     return o;
   };
+
+  // Returns the current/active question's correct-answer letter, stored in array
+  let getActiveCorrectLetter = () => Correct_Letters[$(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex)];
+  ;
   //#endregion
+
 
   function constructQuesHTMLFrom(questionObj, questionIndex) {
     // Start with a new template
@@ -187,29 +221,26 @@ $(document).ready(function() {
 
   function reset() {
     // Reset Game Variables
-    numCorrectAnswers = 0;
-    numIncorrectAnswers = 0;
-    numTimedOutAnswers = 0;
+    TriviaGame.reset();
 
-    $(DOM_SELECT_Events.hideOnStart).hide();
+    DOM_JQ_Events.hideOnStart.hide();
 
     // Make a new array that is shuffled from the QUESTIONS array
     Shuffled_Questions = Shuffle(Array.from(Array(QUESTIONS.length).keys()))
-      .map(shuffledIndex => {
-        return QUESTIONS[shuffledIndex];
-      });
+      .map(shuffledIndex => QUESTIONS[shuffledIndex]);
 
     // Construct the carousel items for each question
-    $(".carousel-inner").empty();
-    $(".carousel-indicators").empty();
+    DOM_JQ_Questions.empty();
+    DOM_JQ_Indicators.empty().addClass(DOM_CLASS_Styles.locked);
+
     Shuffled_Questions.forEach((questionObj, index) => {
       // Construct a new question set of elements (uses template)
-      $(".carousel-inner")
+      DOM_JQ_Questions
         .append(constructQuesHTMLFrom(questionObj, index));
 
       
-      // add a li item to carousel indicator list
-      $(".carousel-indicators")
+      // add a li item to carousel's indicator list
+      DOM_JQ_Indicators
         .append($("<li>")
           .attr(`data-target`, `#${DOM_IDs.questionCarousel.id}`)
           .attr(`data-slide-to`, index));
@@ -221,43 +252,42 @@ $(document).ready(function() {
   }
 
   function finalResults(){
-    $(DOM_SELECT_Events.showOnFinish).show();
-    $(".carousel-indicators").removeClass(DOM_CLASS_Styles.locked); // make indicators clickable
-    $(DOM_IDs.numCorrect  ).text(numCorrectAnswers  );
-    $(DOM_IDs.numIncorrect).text(numIncorrectAnswers);
-    $(DOM_IDs.numTimeOut  ).text(numTimedOutAnswers );
+    DOM_JQ_Events.showOnFinish.show();
+    DOM_JQ_Indicators.removeClass(DOM_CLASS_Styles.locked); // make indicators clickable
+    $(DOM_IDs.numCorrect  ).text(TriviaGame.numCorrectAnswers  );
+    $(DOM_IDs.numIncorrect).text(TriviaGame.numIncorrectAnswers);
+    $(DOM_IDs.numTimeOut  ).text(TriviaGame.numTimedOutAnswers );
   }
-
+  
   function singleResult(result) {
-    // No matter the result, Lock the answers
-    $(DOM_SELECT_Events.answerLocks).addClass(DOM_CLASS_Styles.locked)
+    // No matter the result, lock the answers
+    $(DOM_SELECT_AnswerButtons).addClass(DOM_CLASS_Styles.locked)
 
     // Target the correct answer button, to restyle it below
-    let correctLetter = Correct_Letters[$(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex)];
-    let correctButton = $(`${DOM_SELECT_AnswerButtons}[data-letter="${correctLetter}"]`);
-    correctButton.removeClass("list-group-item-info");      
+    let correctButton = $(`${DOM_SELECT_AnswerButtons}[data-letter="${getActiveCorrectLetter()}"]`);
+    correctButton.removeClass("list-group-item-info");
 
     // Target the active carousel indicator to restyle it below
     let currentIndicator = $(".carousel-indicators li.active");
 
     switch (result) {
-      case questionResult.outoftime:
-        ++numTimedOutAnswers; // update variable counter
-        $(DOM_IDs.outOfTime).show(); // Show the result text
+      case questionResult.outOfTime:
+        ++TriviaGame.numTimedOutAnswers; // update variable counter
+        $(DOM_IDs.outOfTime_text).show(); // Show the result text
         correctButton.addClass("list-group-item-warning") // Style the Correct Button
         currentIndicator.addClass("bg-warning"); // Style the indicator
         break;
 
       case questionResult.correct:
-        ++numCorrectAnswers; // update variable counter
-        $(DOM_IDs.correct).show(); // Show the result text
+        ++TriviaGame.numCorrectAnswers; // update variable counter
+        $(DOM_IDs.correct_text).show(); // Show the result text
         correctButton.addClass("list-group-item-success"); // // Style the Correct Button
         currentIndicator.addClass("bg-success"); // Style the indicator
         break;
 
       case questionResult.incorrect:
-        ++numIncorrectAnswers; // update variable counter
-        $(DOM_IDs.incorrect).show(); // Show the result text
+        ++TriviaGame.numIncorrectAnswers; // update variable counter
+        $(DOM_IDs.incorrect_text).show(); // Show the result text
         correctButton.addClass("list-group-item-success"); // Style the Correct Button   
         currentIndicator.addClass("bg-danger"); // Style the indicator
         break;
@@ -265,46 +295,44 @@ $(document).ready(function() {
       default: ;
     }
 
-    // Timeout for user to see 
+    // Timeout for user to see result
     setTimeout(() => {
       // Hide the single question results
-      [DOM_IDs.correct, DOM_IDs.incorrect, DOM_IDs.outOfTime].forEach(id => {
-        $(id).hide();
-      });
-
+      $(`.${DOM_CLASS_SingleResult}`).hide();
+      // Clear timesUp style class
+      DOM_JQ_Events.onTimeOut.removeClass(DOM_CLASS_Styles.timesUp);
+      
       checkIfAtEnd();
     }, 1000 * 1.5); // seconds to wait before going to next question
   }
 
   function unlockChoices() {
     // Make answers selectable
-    $(DOM_SELECT_Events.answerLocks).removeClass(DOM_CLASS_Styles.locked)
+    $(DOM_SELECT_AnswerButtons).removeClass(DOM_CLASS_Styles.locked)
 
     // Start countdown timer
     let multOfSecsLeft = SECONDS_PER_QUESTION * UPDATE_INTERVAL_DIVISOR;
-
     globalTimer = setInterval(() => {
-      // Check if out of time, checking at top of function to get full, last interval
+      // Check if out of time. 
+      // Checking at top of function to get full, last interval
       if (multOfSecsLeft === 0) {
         clearInterval(globalTimer); // stop the timer
         // Style elements on this event (ie progress timer)
-        $(DOM_SELECT_Events.outOfTime).addClass(DOM_CLASS_Styles.timesUp)
-        // Show Result
-        singleResult(questionResult.outoftime);
+        DOM_JQ_Events.onTimeOut.addClass(DOM_CLASS_Styles.timesUp)
+        singleResult(questionResult.outOfTime); // show result
       }
       else {
         --multOfSecsLeft;
 
         let secondsLeft = (multOfSecsLeft / UPDATE_INTERVAL_DIVISOR);
-        // secondsLeft is likely a fraction
         // If less than 10 seconds, display a single decimal digit
-        $(timeRemaining).text(
+        $(DOM_IDs.timeRemaining).text(
           (secondsLeft).toFixed(secondsLeft > 10 ? 0 : 1)
         );
 
         // Calculate the percentage of time remaining to update progress bar
         let percent = secondsLeft / SECONDS_PER_QUESTION * 100;
-        $(timerProgressBar)
+        $(DOM_IDs.timerProgressBar)
           .css("width", `${percent}%`)
           .attr("aria-valuenow", percent);
       }
@@ -315,47 +343,53 @@ $(document).ready(function() {
     // Reveal choices on the _active_ carousel item
     $(`${DOM_SELECT_ActiveQuestion} .${DOM_CLASS_Styles.reveal}`).css("opacity", 1);
 
-    // Timeout after reveal answers, then make selectable and start the timer
+    // Timeout after revealing answers to then make answer selectable and starts the timer
     // NB: this is to avoid the user clicking an answer before they realize
     setTimeout(unlockChoices, 1000 * 1.5); // seconds after revealing answers to make selectable
   }
 
   function startNewQuestion() {
     // Reset Timer elements to 'Full'
-    $(timeRemaining).text(SECONDS_PER_QUESTION);
-    $(timerProgressBar).css("width", "100%");
-    $(DOM_SELECT_Events.outOfTime).removeClass(DOM_CLASS_Styles.timesUp);
+    $(DOM_IDs.timeRemaining).text(SECONDS_PER_QUESTION);
+    $(DOM_IDs.timerProgressBar).css("width", "100%");
+
+    if (isCheating) {
+      console.log('\n', $(`${DOM_SELECT_ActiveQuestion} .${DOM_CLASS_QuestionText}`).text());
+      ( (correctLetter) => {
+        console.log(`Answer: ${correctLetter}`);
+        console.log($(`${DOM_SELECT_ActiveQuestion} .${DOM_CLASS_AnswersText[correctLetter]}`).text());
+      })(getActiveCorrectLetter());
+    }
 
     // Timeout to let user Read Question, then show choices
     setTimeout(revealChoices, 1000 * 1); // seconds to read question then reveal answers
   }
 
-  function checkIfAtEnd() {
-    // we're at the last question if current one's data-index is equal to last index of array (length -1)
-    if($(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex) === Shuffled_Questions.length - 1) {
-      finalResults();
-    }
-    else {
-      $(".carousel").carousel("next"); // Bootstrap's carousel function, will update the .active .carousel-item & indicator
+  // Hook into carousel's transitioning, and only proceed when slide is COMPLETE (slid)
+  $(DOM_IDs.questionCarousel).on('slid.bs.carousel', function() {
+    if (!TriviaGame.gameComplete) { // only start a new question on this trigger if game is not over
       startNewQuestion();
     }
-  }
-
-  function clickStart(event_ThatWeProbDontUse) {
-    // Run reset
-    reset();
-    // Reveal Carousel of Questions
-    $(DOM_SELECT_Events.showOnStart).show()
-    startNewQuestion();
+  });
+  function checkIfAtEnd() {
+    // This is the last question if its data's index is equal to last index of array (length -1)
+    if ($(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex) === Shuffled_Questions.length - 1) {
+      TriviaGame.gameComplete = true;
+      finalResults();
+    }
+    else {  
+      // Bootstrap's carousel function, will update the .active .carousel-item & indicator
+      $(DOM_IDs.questionCarousel).carousel("next"); // above will call startNewQuestion when complete
+    }
   }
 
   function clickedAnswer(event_ThatWeProbDontUse) {
     // Stop the timer
     clearInterval(globalTimer);
 
-    // store the clicked button's letter, found by data attribute
+    // Store the clicked button's letter, found by data attribute
     let clickedLetter = $(this).data(DOM_DATA_Attr.letter);
-    // check our stored array of answers using the current question's index (by data attribute)
+    // Check our stored array of answer letters, using the current question's index (data attribute)
     let correctLetter = Correct_Letters[$(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex)];
 
     if (clickedLetter !== correctLetter) {
@@ -363,25 +397,34 @@ $(document).ready(function() {
       $(this)
         .addClass("list-group-item-danger")
         .removeClass("list-group-item-info");
+      // Show the incorrect result
       singleResult(questionResult.incorrect);
     }
     else {
+      // Show the correct result
       singleResult(questionResult.correct);
     }
   }
 
-  //#region START of EXECUTION
-  // Link up the DOM elements by their ids
-  for (let k of Object.keys(DOM_IDs)) {
-    DOM_IDs[k] = document.getElementById(k);
+  function clickStart(event_ThatWeProbDontUse) {
+    // Run Reset
+    reset();
+    // Reveal Carousel of Questions
+    DOM_JQ_Events.showOnStart.show();
+    // Start the first question
+    startNewQuestion();
   }
-  // One-off IDs that relate to game constants 
-  $(secondsPerQ).text(SECONDS_PER_QUESTION);
+
+  //#region START of EXECUTION
+  console.log(
+  `For testing purposes: 
+To toggle showing the correct answer's letter, run toggleCheat() here in the console.
+Answer will appear on next trivia question.`);
   //#endregion
 
-  //#region  On Click FUNCTIONS
+  //#region On Event FUNCTIONS
   $(`.${DOM_CLASS_StartButton}`).on("click", clickStart);
-  // Because the ACTIVE carousel item gets dynamically cycled, use document click handler
+  // Because the ACTIVE carousel item gets dynamically cycled, use document click handler instead
   $(document).on("click", DOM_SELECT_AnswerButtons, clickedAnswer);
   //#endregion
 });
