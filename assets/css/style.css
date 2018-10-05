@@ -63,3 +63,7 @@
   border-bottom-left-radius: .25rem;
   border-bottom-right-radius: .25rem;
 }
+
+.carousel-item h2 {
+  height: 6rem;
+}

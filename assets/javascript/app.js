@@ -58,7 +58,7 @@ $(document).ready(function() {
       ]
     },
     {
-      quesText: "Why did Archer miss varsity lacrosse his freshman year?",
+      quesText: "Why did Archer miss varsity lacrosse freshman year?",
       answers: [
         { text: "Pneumonia", correct: true },
         { text: "Amnesia"  , },
@@ -174,7 +174,7 @@ $(document).ready(function() {
     locked : "locked" , // Removes pointer events
     timesUp: "timesUp", // Warning/Danger style text
   };
-  // Static Targets for events that toggle hide/show, a style above
+  // Static Targets for events that toggle hide/show or toggle style above
   const DOM_JQ_Events = {
     // store the query results
     jq_hideOnStart : $(".hideOnStart" ),
@@ -189,7 +189,7 @@ $(document).ready(function() {
     onTimeOut(isOut) { this.jq_onTimeOut.toggleClass(DOM_CLASS_Styles.timesUp, isOut); },
   };
 
-  // Static Target Selects, held as jQuery (possibly array of targets)
+  // Static Target Selects, held as jQuery (possible array of elements)
   const DOM_JQ_Questions     = $(".carousel-inner");      // parent element that holds all the questions
   const DOM_JQ_Indicators    = $(".carousel-indicators"); // parent element of the carousel indicators  
   const DOM_JQ_SingleResults = $(".singleResult");
@@ -252,6 +252,13 @@ $(document).ready(function() {
     for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
     return o;
   };
+
+  // Scroll to bottom
+  function scrollToBottom() {
+    $("html, body").animate({
+      scrollTop: $(document).height() - $(window).height() },
+      1000, "swing");
+  }
 
   // Returns the current/active question's correct-answer letter, stored in array
   let getActiveCorrectLetter = () => Correct_Letters[$(DOM_SELECT_ActiveQuestion).data(DOM_DATA_Attr.qIndex)];
@@ -319,11 +326,12 @@ $(document).ready(function() {
   }
 
   function finalResults() {
-    DOM_JQ_Events.showOnFinish();
-    DOM_JQ_Indicators.removeClass(DOM_CLASS_Styles.locked); // make indicators clickable
     $(DOM_IDs.numCorrect  ).text(TriviaGame.numCorrectAnswers  );
     $(DOM_IDs.numIncorrect).text(TriviaGame.numIncorrectAnswers);
     $(DOM_IDs.numTimeOut  ).text(TriviaGame.numTimedOutAnswers );
+    DOM_JQ_Events.showOnFinish();
+    DOM_JQ_Indicators.removeClass(DOM_CLASS_Styles.locked); // make indicators clickable
+    scrollToBottom();
   }
   
   function singleResult(result) {
@@ -474,6 +482,7 @@ $(document).ready(function() {
     reset();
     // Reveal Carousel of Questions
     DOM_JQ_Events.showOnStart();
+    scrollToBottom();
     // Start the first question
     startNewQuestion();
   }

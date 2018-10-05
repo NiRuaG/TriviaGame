@@ -13,21 +13,23 @@
 </head>
 
 <body class="bg-primary">
-  <header class="jumbotron jumbotron-fluid pl-5 py-5">
-    <h1 class="display-3 font-special-3D">Archer Trivia</h1>
+  <header class="jumbotron jumbotron-fluid pl-2 pl-md-4 py-2 py-md-4 mb-3">
+    <h1 class="display-4 font-special-3D">Archer Trivia</h1>
     <p class="lead font-question">How well do you know the <em>world's most dangerous spy</em>?</p>
   </header>
 
   <main class="container">
     <!-- START section -->
-    <section class="row jumbotron bg-dark text-light justify-content-center hideOnStart">
-      <ul class="col-8">
+    <section class="hideOnStart row jumbotron bg-dark text-light justify-content-center py-3">
+      <ul class="col-12">
         <li>You have <span id="secondsPerQ">#</span> seconds to answer each Archer Trivia Question.</li>
         <li>Click on the multiple-choice buttons to guess.</li>
       </ul>
-      <button class="startButton col-auto btn btn-primary mt-5">Enter the <em>Danger Zone</em></button>
+      <div class="col-12">
+        <img class="img-fluid" src="./assets/images/comradequestions.gif">
+      </div>
+      <button class="startButton col-auto btn btn-primary mt-2">Enter the <em>Danger Zone</em></button>
     </section>
-
 
     <!-- Questions -->
     <section class="showOnStart" style="display: none">
@@ -88,13 +90,13 @@
   </main>
 
   <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
     crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
     crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
     crossorigin="anonymous"></script>
   <script src="./assets/javascript/app.js"></script>
-</body>
+  </body>
 
 </html>
