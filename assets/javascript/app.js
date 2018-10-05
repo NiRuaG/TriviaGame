@@ -4,6 +4,10 @@ function toggleCheat() {
   isCheating = !isCheating;
   console.log(`Cheating ${isCheating}`);
 }
+console.log(
+  `For testing purposes: 
+To toggle showing the correct answer's letter, run toggleCheat() here in the console.
+Answer will appear on next trivia question.`);
 
 $(document).ready(function() {
   //#region Variables & Constants for Trivia Game
@@ -420,7 +424,7 @@ $(document).ready(function() {
 
     // Timeout after revealing answers to then make answer selectable and starts the timer
     // NB: this is to avoid the user clicking an answer before they realize
-    setTimeout(unlockChoices, 1000 * 1.5); // seconds after revealing answers to make selectable
+    setTimeout(unlockChoices, 1000 * 1.2); // seconds after revealing answers to make selectable
   }
 
   function startNewQuestion() {
@@ -437,7 +441,7 @@ $(document).ready(function() {
     }
 
     // Timeout to let user Read Question, then show choices
-    setTimeout(revealChoices, 1000 * 1); // seconds to read question then reveal answers
+    setTimeout(revealChoices, 1000 * 0.8); // seconds to read question then reveal answers
   }
 
   // Hook into carousel's transitioning, and only proceed when slide is COMPLETE (slid)
@@ -486,13 +490,6 @@ $(document).ready(function() {
     // Start the first question
     startNewQuestion();
   }
-
-  //#region START of EXECUTION
-  console.log(
-  `For testing purposes: 
-To toggle showing the correct answer's letter, run toggleCheat() here in the console.
-Answer will appear on next trivia question.`);
-  //#endregion
 
   //#region On Event FUNCTIONS
   DOM_JQ_StartButtons.on("click", clickStart);

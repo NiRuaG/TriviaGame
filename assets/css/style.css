@@ -46,7 +46,7 @@
   transition: width linear 0.1s;
   /* duration should not be too short (choppy)
      nor too long (UX delay when progress is 0 and timer already ran out */
-  /* consider adding time in script to account for animation delay */
+  /* consider adding time in script to account for animation delay instead */
 }
 
 .list-group-item-action {
